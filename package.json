@@ -1,0 +1,26 @@
+{
+  "name": "api-proxy",
+  "version": "1.0.0",
+  "description": "A proxy to hide API keys, memoise responses and enforce rate limits ",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexbostock/api-proxy.git"
+  },
+  "author": "Alex Bostock",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexbostock/api-proxy/issues"
+  },
+  "homepage": "https://github.com/alexbostock/api-proxy#readme",
+  "devDependencies": {
+    "jest": "^24.9.0"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1"
+  }
+}
