@@ -4,6 +4,7 @@
   "description": "A proxy to hide API keys, memoise responses and enforce rate limits ",
   "main": "index.js",
   "scripts": {
+    "run": "node index.js",
     "test": "jest"
   },
   "repository": {
