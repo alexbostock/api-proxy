@@ -10,6 +10,8 @@ const username = process.env.RTT_USERNAME;
 const password = process.env.RTT_PASSWORD;
 
 function fetchRTT(req, res, arrivals) {
+    res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
+
     const station = req.params['station'];
     if (!station) {
         res.status(400).send("Expected station CRS");
