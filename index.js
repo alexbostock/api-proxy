@@ -11,11 +11,14 @@ if (process.env.BEHIND_REVERSE_PROXY) {
 }
 
 const trains = require('./trains');
+const xkcd = require('./xkcd');
 
 app.get('/', (req, res) => {
     res.send('Hello!');
 });
 
 app.use('/trains', trains);
+
+app.use('/xkcd', xkcd);
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
