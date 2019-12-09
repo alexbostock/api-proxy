@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const axios = require('axios');
+const Cache = require('../cache');
+
+const ttl = 10 * 1000;
+const cache = new Cache(ttl);
 
 router.get('/:station/departures', (req, res) => fetchRTT(req, res));
 router.get('/:station/arrivals', (req, res) => fetchRTT(req, res, true));
@@ -9,7 +13,7 @@ router.get('/:station/arrivals', (req, res) => fetchRTT(req, res, true));
 const username = process.env.RTT_USERNAME;
 const password = process.env.RTT_PASSWORD;
 
-function fetchRTT(req, res, arrivals) {
+async function fetchRTT(req, res, arrivals) {
     res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
 
     const station = req.params['station'];
@@ -20,29 +24,36 @@ function fetchRTT(req, res, arrivals) {
     const baseUrl = 'https://api.rtt.io/api/v1/json/search/' + station;
     const url = arrivals ? baseUrl + '/arrivals' : baseUrl;
 
-    axios.get(url, {auth: {username: username, password: password}})
-        .then((api_res) => {
-            switch(api_res.status) {
-            case 200:
-                res.send(trimData(api_res.data, arrivals));
-                break;
-            case 404:
-                res.status(404).send("Station not found");
-                break;
-            case 500:
-                res.status(500).send("RTT API gave error 500");
-                break;
-            case 429:
-                res.status(429).send("Rate limit exceeded");
-                break;
-            default:
-                res.status(500).send("Unexpected error from RTT API: " + api_res.status);
-            }
-        })
-        .catch((err) => {
-            console.error(err);
-            res.status(500).send('Failed to fetch from Realtime Trains API');
-        });
+    try {
+        const api_res = await getData(url);
+
+        switch(api_res.status) {
+        case 200:
+            res.send(trimData(api_res.data, arrivals));
+            break;
+        case 404:
+            res.status(404).send("Station not found");
+            break;
+        case 500:
+            res.status(500).send("RTT API gave error 500");
+            break;
+        case 429:
+            res.status(429).send("Rate limit exceeded");
+            break;
+        default:
+            res.status(500).send("Unexpected error from RTT API: " + api_res.status);
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Failed to fetch from Realtime Trains API');
+    };
+}
+
+async function getData(url) {
+    cache.set(url, cache.get(url) || axios.get(url, {
+        auth: {username: username, password: password}
+    }));
+    return cache.get(url);
 }
 
 function trimData(api_res, arrivals) {

@@ -15,6 +15,8 @@ Create a `.env` file in the project root directory. `.env` should define:
 
 `npm run`
 
+This proxy does not provide any rate-limiting. It should thus be deployed behind a reverse proxy such as NGINX, and `BEHIND_REVERSE_PROXY` in `.env` should be set to `1` (`true`).
+
 ## API
 
 ### Realtime Train Times
@@ -29,9 +31,18 @@ Realtime information about Great British trains, from [Realtime Trains](https://
 
 Returns status 404 if the requested station does not exist.
 
+### Latest XKCD Comic
+
+Returns data about the latest [xkcd](https://xkcd.com) comic.
+
+`GET /xkcd/latest`
+
+## Memoisation
+
+Calls to third-party APIs are cached. Each endpoint has a TTL. Repeated requests to the same endpoint return a cached value. When the cached value is older than TTL, the next request to that endpoint will trigger a new call to the third-party API.
+
 ## TODO
 
-- [ ] Add a rate-limiter.
-- [ ] Memoise responses to minimise the number of calls to third-party APIs.
+- [x] Memoise responses to minimise the number of calls to third-party APIs.
 - [ ] Add endpoints to fetch only details of trains departing for or arriving from a particular station.
-- Add additional API endpoints.
+- [ ] Add additional API endpoints.
