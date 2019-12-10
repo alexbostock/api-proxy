@@ -13,20 +13,20 @@ async function fetchLatest(req, res) {
     res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
 
     try {
-        const api_res = await getData();
+        const apiRes = await getData();
 
-        switch(api_res.status) {
+        switch(apiRes.status) {
         case 200:
-            res.send(api_res.data);
+            res.send(apiRes.data);
             break;
         case 500:
-            res.status(500).send("XKCD API gave error 500");
+            res.status(500).send('XKCD API gave error 500');
             break;
         case 429:
-            res.status(429).send("Rate limit exceeded");
+            res.status(429).send('Rate limit exceeded');
             break;
         default:
-            res.status(500).send("Unexpected error from XKCD API: " + api_res.status);
+            res.status(500).send('Unexpected error from XKCD API: ' + apiRes.status);
         }
     } catch(err) {
         console.error(err);

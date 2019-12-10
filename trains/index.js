@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const axios = require('axios');
+const csvParse = require('csv-parse')
 const Cache = require('../cache');
 
 const ttl = 10 * 1000;
@@ -9,58 +10,95 @@ const cache = new Cache(ttl);
 
 router.get('/:station/departures', (req, res) => fetchRTT(req, res));
 router.get('/:station/arrivals', (req, res) => fetchRTT(req, res, true));
+router.get('/stations', fetchStationList);
 
 const username = process.env.RTT_USERNAME;
 const password = process.env.RTT_PASSWORD;
+
+async function fetchStationList(req, res) {
+    res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
+    res.set('Cache-Control', 'max-age=86400');
+
+    const url = 'https://www.nationalrail.co.uk/static/documents/content/station_codes.csv';
+
+    try {
+        const apiRes = await getData(url, 5 * 60 * 1000);
+
+        switch(apiRes.status) {
+        case 200:
+            csvParse(apiRes.data, (err, parsed) => {
+                if (err) {
+                    res.status(500).send('Failed to parse csv station list');
+                } else {
+                    parsed.shift();
+                    const response = parsed.map((record) => {
+                        const crs = record[1];
+                        const name = record[0];
+
+                        return {crs: crs, name: name};
+                    });
+
+                    res.send(response);
+                }
+            });
+            break;
+        default:
+            res.status(500).send('Failed to fetch station list. Status: ' + apiRes.status);
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Failed to fetch station list.');
+    }
+}
 
 async function fetchRTT(req, res, arrivals) {
     res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
 
     const station = req.params['station'];
     if (!station) {
-        res.status(400).send("Expected station CRS");
+        res.status(400).send('Expected station CRS');
     }
 
     const baseUrl = 'https://api.rtt.io/api/v1/json/search/' + station;
     const url = arrivals ? baseUrl + '/arrivals' : baseUrl;
 
     try {
-        const api_res = await getData(url);
+        const apiRes = await getData(url);
 
-        switch(api_res.status) {
+        switch(apiRes.status) {
         case 200:
-            res.send(trimData(api_res.data, arrivals));
+            res.send(trimData(apiRes.data, arrivals));
             break;
         case 404:
-            res.status(404).send("Station not found");
+            res.status(404).send('Station not found');
             break;
         case 500:
-            res.status(500).send("RTT API gave error 500");
+            res.status(500).send('RTT API gave error 500');
             break;
         case 429:
-            res.status(429).send("Rate limit exceeded");
+            res.status(429).send('Rate limit exceeded');
             break;
         default:
-            res.status(500).send("Unexpected error from RTT API: " + api_res.status);
+            res.status(500).send('Unexpected error from RTT API: ' + apiRes.status);
         }
     } catch (err) {
         console.error(err);
         res.status(500).send('Failed to fetch from Realtime Trains API');
-    };
+    }
 }
 
-async function getData(url) {
+async function getData(url, ttl) {
     cache.set(url, cache.get(url) || axios.get(url, {
         auth: {username: username, password: password}
-    }));
+    }), ttl);
     return cache.get(url);
 }
 
-function trimData(api_res, arrivals) {
+function trimData(apiRes, arrivals) {
     return {
-        location: api_res.location.name,
+        location: apiRes.location.name,
 
-        services: api_res['services']
+        services: apiRes['services']
             .filter((service) => service.isPassenger && service.locationDetail.isPublicCall)
             .map((service) => {
                 const details = service.locationDetail;
