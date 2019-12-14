@@ -13,6 +13,8 @@ if (process.env.BEHIND_REVERSE_PROXY) {
 const trains = require('./trains');
 const xkcd = require('./xkcd');
 
+app.disable('x-powered-by');
+
 app.use((req, res, next) => {
     if (process.env.CORS_ORIGINS === '*') {
         res.set('Access-Control-Allow-Origin', '*');
