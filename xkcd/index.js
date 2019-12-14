@@ -10,8 +10,6 @@ const cache = new Cache(ttl);
 router.get('/latest', fetchLatest);
 
 async function fetchLatest(req, res) {
-    res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
-
     try {
         const apiRes = await getData();
 

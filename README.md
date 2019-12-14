@@ -10,6 +10,7 @@ Create a `.env` file in the project root directory. `.env` should define:
 
 - `PORT_NUMBER`: integer port number at which the server should listen.
 - `BEHIND_REVERSE_PROXY`: a boolean value (1 or 0) indicating the deployment config.
+- `CORS_ORIGINS`: valid origins for `Access-Control-Allow-Origin` header in responses. See CORS section below.
 - `RTT_USERNAME`: a username for the [Realtime Trains](https://www.realtimetrains.co.uk/) API.
 - `RTT_PASSWORD`: the corresponding password for the Realtime Trains API.
 
@@ -41,8 +42,10 @@ Returns data about the latest [xkcd](https://xkcd.com) comic.
 
 Calls to third-party APIs are cached. Each endpoint has a TTL. Repeated requests to the same endpoint return a cached value. When the cached value is older than TTL, the next request to that endpoint will trigger a new call to the third-party API.
 
-## TODO
+## CORS
 
-- [x] Memoise responses to minimise the number of calls to third-party APIs.
-- [ ] Add endpoints to fetch only details of trains departing for or arriving from a particular station.
-- [ ] Add additional API endpoints.
+All API responses will have a CORS header, depending on the environment variable `CORS_ORIGINS`
+
+If `CORS_ORIGINS` is `*`, all response headers have `Access-Control-Allow-Origin: *`.
+
+If `CORS_ORIGINS` is a comma-separated list (eg. `alexbostock.co.uk,bostock.uk`), the response to a request from any origin in that list will have `Access-Control-Allow-Origin: [Origin]` and `Vary: Origin`.

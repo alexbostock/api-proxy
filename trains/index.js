@@ -16,7 +16,6 @@ const username = process.env.RTT_USERNAME;
 const password = process.env.RTT_PASSWORD;
 
 async function fetchStationList(req, res) {
-    res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
     res.set('Cache-Control', 'max-age=86400');
 
     const url = 'https://www.nationalrail.co.uk/static/documents/content/station_codes.csv';
@@ -52,8 +51,6 @@ async function fetchStationList(req, res) {
 }
 
 async function fetchRTT(req, res, arrivals) {
-    res.set('Access-Control-Allow-Origin', process.env.CORS_HEADER);
-
     const station = req.params['station'];
     if (!station) {
         res.status(400).send('Expected station CRS');
