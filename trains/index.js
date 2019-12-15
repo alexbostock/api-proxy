@@ -95,7 +95,7 @@ function trimData(apiRes, arrivals) {
     return {
         location: apiRes.location.name,
 
-        services: apiRes['services']
+        services: (apiRes['services'] || [])
             .filter((service) => service.isPassenger && service.locationDetail.isPublicCall)
             .map((service) => {
                 const details = service.locationDetail;
