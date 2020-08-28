@@ -18,7 +18,7 @@ const password = process.env.RTT_PASSWORD;
 async function fetchStationList(req, res) {
     res.set('Cache-Control', 'max-age=86400');
 
-    const url = 'https://www.nationalrail.co.uk/static/documents/content/station_codes.csv';
+    const url = 'https://www.nationalrail.co.uk/station_codes%20(06-08-2020).csv';
 
     try {
         const apiRes = await getData(url, 5 * 60 * 1000);
