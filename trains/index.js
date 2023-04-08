@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const express = require('express');
 const router = express.Router();
 
@@ -15,39 +17,31 @@ router.get('/stations', fetchStationList);
 const username = process.env.RTT_USERNAME;
 const password = process.env.RTT_PASSWORD;
 
-async function fetchStationList(req, res) {
-    res.set('Cache-Control', 'max-age=86400');
+let STATION_LIST = null;
 
-    const url = 'https://www.nationalrail.co.uk/station_codes%20(06-08-2020).csv';
-
-    try {
-        const apiRes = await getData(url, 5 * 60 * 1000);
-
-        switch(apiRes.status) {
-        case 200:
-            csvParse(apiRes.data, (err, parsed) => {
-                if (err) {
-                    res.status(500).send('Failed to parse csv station list');
-                } else {
-                    parsed.shift();
-                    const response = parsed.map((record) => {
-                        const crs = record[1];
-                        const name = record[0];
-
-                        return {crs: crs, name: name};
-                    });
-
-                    res.send(response);
-                }
-            });
-            break;
-        default:
-            res.status(500).send('Failed to fetch station list. Status: ' + apiRes.status);
+async function loadStationList() {
+    const csvData = fs.readFileSync('./trains/stations.csv');
+    csvParse(csvData, (err, parsed) => {
+        if (err) {
+            throw new Error('Failed to parse csv st)ation list');
+        } else {
+            parsed.shift();
+            STATION_LIST = parsed.map(([name, crs]) => ({
+                crs: crs,
+                name: name
+            }));
         }
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Failed to fetch station list.');
+    });
+}
+
+loadStationList();
+
+async function fetchStationList(req, res) {
+    if (!STATION_LIST) {
+        res.status(500).send('Failed to read / parse station list');
+        return;
     }
+    res.send(STATION_LIST);
 }
 
 async function fetchRTT(req, res, arrivals) {
